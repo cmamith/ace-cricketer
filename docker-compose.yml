@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ace_cricketer
+      POSTGRES_USER: ace
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ace -d ace_cricketer"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  web:
+    build: .
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      DATABASE_URL: postgresql+psycopg://ace:${POSTGRES_PASSWORD}@db:5432/ace_cricketer
+      SESSION_SECRET: ${SESSION_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-owner}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SITE_ORIGIN: ${SITE_ORIGIN:-http://127.0.0.1:8000}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      SHIPPING_FEE_PAISE: ${SHIPPING_FEE_PAISE:-0}
+      FREE_SHIPPING_ABOVE_PAISE: ${FREE_SHIPPING_ABOVE_PAISE:-0}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:
